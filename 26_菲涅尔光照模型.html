@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        margin: 0;
+        background: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sketch"></div>
+    <script src="https://unpkg.com/kokomi.js@1.9.78/build/kokomi.umd.js"></script>
+    <script src="https://unpkg.com/three@0.154.0/build/three.min.js"></script>
+    <script>
+      class Sketch extends kokomi.Base {
+        create() {
+          this.camera.position.set(0, 0, 5)
+          new kokomi.OrbitControls(this)
+
+          const envmap = new THREE.CubeTextureLoader().load([
+            'https://s2.loli.net/2022/09/29/X8TDZROlUo6uAyG.png',
+            'https://s2.loli.net/2022/09/29/KYEJ9ylQNIe6h4R.png',
+            'https://s2.loli.net/2022/09/29/GqseLg6tWoluDzV.png',
+            'https://s2.loli.net/2022/09/29/LUk8P21MJG6AtNF.png',
+            'https://s2.loli.net/2022/09/29/4BO1JHoM3phFCb7.png',
+            'https://s2.loli.net/2022/09/29/5NvAxfCVqlKFRZU.png'
+          ])
+
+          const geometry = new THREE.SphereGeometry(2, 64, 64)
+          // const geometry = new THREE.PlaneGeometry(4, 4);
+          const material = new THREE.ShaderMaterial({
+            uniforms: {
+              iChannel0: {
+                value: envmap
+              }
+            },
+            vertexShader: /* glsl */ `
+          uniform float iTime;
+          uniform vec3 iResolution;
+          uniform vec4 iMouse;
+
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vWorldPosition;
+
+          void main(){
+            vec3 p=position;
+            gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);
+            
+            vUv=uv;
+            vNormal=normal;
+            vWorldPosition=(modelMatrix*vec4(p,1.)).xyz; // 片元世界坐标
+          }
+        `,
+            fragmentShader: /* glsl */ `
+          uniform float iTime;
+          uniform vec3 iResolution;
+          uniform vec4 iMouse;
+          uniform samplerCube iChannel0;
+
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vWorldPosition;
+
+          // 菲涅尔近似等式
+          float fresnel(float bias,float scale,float power,vec3 I,vec3 N)
+          {
+              return bias+scale*pow(1.-dot(I,N),power);
+          }
+
+          void main(){
+            vec2 uv=vUv;
+            vec3 objectColor = vec3(1., 1., 1.); // 物体颜色-白色
+            vec3 color = vec3(0., 0., 0.); // 没有光照时是黑色
+            vec3 lightColor = vec3(1., 0., 0.); // 光照颜色-红色
+
+            /** 
+             * 1.环境光 
+            */
+            float ambientIntensity = 0.2;
+            color += ambientIntensity * lightColor * objectColor;
+
+            vec3 n = vNormal;
+            vec3 lightPosition = vec3(20., 20., 1.); // 光线位置
+            vec3 lightDirection = normalize(lightPosition - vWorldPosition); // 光线方向
+            vec3 reflectDir = reflect(-lightDirection, n); // 反射光的方向向量
+            vec3 viewDir = normalize(cameraPosition-vWorldPosition); // 眼睛方向向量（就是片元指向摄像头）
+
+
+            /**
+             * Bllin-Phong光照模型
+             * (对比冯氏光照模型，反射因子计算方式不一样，过渡更加顺滑，优先使用)
+             */
+            vec3 halfVec = normalize(viewDir + lightDirection); // 半程向量
+            float spec = dot(n, halfVec); // 镜面反射因子
+            float shininess=10.; // 镜面反射光的强度
+            spec = pow(spec, shininess); 
+            color += spec * lightColor * objectColor; // 镜面反射光
+
+            /**
+             * IBL镜面反射
+             * 基于环境贴图的反射技术，其中IBL的全称是Image-Based Lighting
+             */
+
+            // IBL
+            float iblIntensity=.2; // IBL强度
+            vec3 iblCoord=normalize(reflect(-viewDir,vNormal)); // 反射光的方向向量
+            vec3 ibl=texture(iChannel0,iblCoord).xyz; // 从环境贴图中采样
+            vec3 iblLight=ibl*iblIntensity; // IBL光照
+            color+=iblLight*objectColor;
+
+            /** 
+             * 菲涅尔光照模型
+             * 能给物体添加边缘光
+            */
+            vec3 fresColor=vec3(1.);
+            float fresIntensity=.6; // 菲涅尔强度
+            /**
+             * bias:偏移量固定是0
+             * scale:缩放值，越大越明显
+             * power:幂次方，越小越明显 
+             * I:视线方向向量
+             * N:法向量
+             */
+            float fres=fresnel(0.,2.,5.,viewDir,vNormal); // 计算菲涅尔因子
+            vec3 fresLight=fres*fresColor*fresIntensity;
+            color+=fresLight*objectColor;
+
+
+            gl_FragColor=vec4(color,1.);
+
+
+          }
+        `
+          })
+          const mesh = new THREE.Mesh(geometry, material)
+          this.scene.add(mesh)
+
+          const uj = new kokomi.UniformInjector(this)
+          material.uniforms = {
+            ...material.uniforms,
+            ...uj.shadertoyUniforms
+          }
+          this.update(() => {
+            uj.injectShadertoyUniforms(material.uniforms)
+          })
+        }
+      }
+
+      const sketch = new Sketch('#sketch')
+      sketch.create()
+    </script>
+  </body>
+</html>

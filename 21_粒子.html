@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        margin: 0;
+        background: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sketch"></div>
+  </body>
+  <script src="https://unpkg.com/kokomi.js@1.9.78/build/kokomi.umd.js"></script>
+  <script src="https://unpkg.com/three@0.154.0/build/three.min.js"></script>
+  <script>
+    class Sketch extends kokomi.Base {
+      create() {
+        this.camera.position.set(0, 0, 5)
+        new kokomi.OrbitControls(this)
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          uniforms: {
+            uPixelRatio: {
+              value: this.renderer.getPixelRatio()
+            }
+          },
+          vertexShader: `
+            uniform float iTime;
+            uniform float uPixelRatio;
+            varying vec2 vUv;
+
+            void main() {
+              vUv = uv;
+              vec3 p = position;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+
+              gl_PointSize = 50. * uPixelRatio;
+              vec4 mvPosition=modelViewMatrix*vec4(p,1.);
+              gl_PointSize*=(1./-mvPosition.z); // 近大远小
+            }
+          `,
+          fragmentShader: `
+            uniform float iTime;
+            varying vec2 vUv;
+
+            void main() {
+              vec2 uv = gl_PointCoord; // 粒子的uv矩阵
+              uv = (uv-.5)*2.;
+              float d = length(uv);
+              float c = .05 / d; // 发光效果
+              c = pow(c, 2.);
+              gl_FragColor = vec4(vUv,abs(sin(iTime)),c);
+            }
+          `
+        })
+
+        const points = new THREE.Points(
+          new THREE.SphereGeometry(2, 64, 64),
+          // new THREE.PointsMaterial({
+          //   color: 0xff000,
+          //   size: 0.02
+          // }),
+          shaderMaterial
+        )
+        this.scene.add(points)
+
+        const uj = new kokomi.UniformInjector(this)
+        shaderMaterial.uniforms = {
+          ...shaderMaterial.uniforms,
+          ...uj.shadertoyUniforms
+        }
+        this.update(() => {
+          uj.injectShadertoyUniforms(shaderMaterial.uniforms)
+        })
+      }
+    }
+    const sketch = new Sketch('#sketch')
+    sketch.create()
+  </script>
+</html>
