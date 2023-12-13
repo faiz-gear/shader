@@ -1,24 +1,24 @@
-import * as kokomi from "kokomi.js";
+import * as kokomi from 'kokomi.js'
 
-import World from "./World/World";
+import World from './World/World'
 
-import Debug from "./Debug";
+import Debug from './Debug'
 
-import resources from "./resources";
+import resources from './resources'
 
 export default class Experience extends kokomi.Base {
-  constructor(sel = "#sketch") {
-    super(sel);
+  constructor(sel = '#sketch') {
+    super(sel)
 
-    window.experience = this;
+    window.experience = this
 
-    this.debug = new Debug();
+    this.debug = new Debug()
 
-    this.am = new kokomi.AssetManager(this, resources);
+    this.am = new kokomi.AssetManager(this, resources)
 
-    this.camera.position.set(0, 0, 5);
-    new kokomi.OrbitControls(this);
+    this.camera.position.set(0, 0, 2.5)
+    new kokomi.OrbitControls(this)
 
-    this.world = new World(this);
+    this.world = new World(this)
   }
 }
