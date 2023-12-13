@@ -5,6 +5,7 @@ import World from './World/World'
 import Debug from './Debug'
 
 import resources from './resources'
+import Postprocessing from './Postprocessing'
 
 export default class Experience extends kokomi.Base {
   constructor(sel = '#sketch') {
@@ -23,5 +24,15 @@ export default class Experience extends kokomi.Base {
     screenCamera.addExisting()
 
     this.world = new World(this)
+
+    this.postprocessing = new Postprocessing(this)
+    this.postprocessing.addExisting()
+
+    this.update(() => {
+      // 更新RGB位移滤镜强度
+      this.postprocessing.ce.customPass.material.uniforms.uRGBShift.value = Math.abs(
+        this.world.slider?.ws.scroll.delta * 0.001
+      )
+    })
   }
 }

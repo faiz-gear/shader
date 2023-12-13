@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  gsap:
+    specifier: ^3.12.3
+    version: 3.12.3
   kokomi.js:
     specifier: ^1.9.89
     version: 1.9.89(three@0.158.0)

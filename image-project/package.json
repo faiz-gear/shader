@@ -13,6 +13,7 @@
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
+    "gsap": "^3.12.3",
     "kokomi.js": "^1.9.89",
     "lil-gui": "^0.19.1",
     "lygia": "^1.1.3",

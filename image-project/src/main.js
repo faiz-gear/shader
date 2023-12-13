@@ -1,6 +1,11 @@
 import './style.css'
 
 import Experience from './Experience/Experience'
+import img1 from '/textures/1.png'
+import img2 from '/textures/2.png'
+import img3 from '/textures/3.png'
+import img4 from '/textures/4.png'
+import img5 from '/textures/5.png'
 
 document.querySelector('#app').innerHTML = `
 <div id="sketch"></div>
@@ -18,11 +23,11 @@ document.querySelector('#app').innerHTML = `
     </div>
 </div>
 <div class="gallery">
-    <img class="gallery-item" src="https://s2.loli.net/2023/09/12/ySLGYKhVqH3BtN4.jpg" crossorigin="anonymous" alt="" />
-    <img class="gallery-item" src="https://s2.loli.net/2023/09/12/BhmSdM2XA9yYftK.jpg" crossorigin="anonymous" alt="" />
-    <img class="gallery-item" src="https://s2.loli.net/2023/09/12/CqIlJd1XO9rh68e.jpg" crossorigin="anonymous" alt="" />
-    <img class="gallery-item" src="https://s2.loli.net/2023/09/12/RzwqhImAV9H57xs.jpg" crossorigin="anonymous" alt="" />
-    <img class="gallery-item" src="https://s2.loli.net/2023/09/12/p3FME9qcUAnJixm.jpg" crossorigin="anonymous" alt="" />
+    <img class="gallery-item" src="${img1}" crossorigin="anonymous" alt="" />
+    <img class="gallery-item" src="${img2}" crossorigin="anonymous" alt="" />
+    <img class="gallery-item" src="${img3}" crossorigin="anonymous" alt="" />
+    <img class="gallery-item" src="${img4}" crossorigin="anonymous" alt="" />
+    <img class="gallery-item" src="${img5}" crossorigin="anonymous" alt="" />
 </div>
 `
 
